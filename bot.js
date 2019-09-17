@@ -1,66 +1,68 @@
 const Discord = require('discord.js');
-const client = new Discord.Client();
 const auth = require('./auth.json');
-const fs = require('fs');
-const request = require('request');
+const fsExtra = require('fs-extra')
+const helper = require('./src/helper');
 
+const client = new Discord.Client();
 const dir = './memes'
+const memeChannelId = "601159584941342739"
 
 client.on('ready', async () => {
-    console.log(`Logged in as ${client.user.tag}!`);
-
-    if (!fs.existsSync(dir)){
-        fs.mkdirSync(dir);
-    }
-
-    const memeChannel = client.channels.get("601159584941342739");
-    
-    let totalMessages = [];
-    let chunk = await memeChannel.fetchMessages();
-    do
-    {        
-        console.log(`Found ${chunk.size} messages in chunk!`);
-
-        let messages = Array.from(chunk.values())
-        totalMessages = totalMessages.concat(messages);
-
-        for (message of messages)
-        {
-            message.attachments.forEach(a => {
-                download(a.url, a.filename, function(){})
-                //await fs.writeFileAsync(`./memes/${a.filename}`, a.file);
-            });
-        }
-
-        lastMessage = messages.pop();
-        chunk = await memeChannel.fetchMessages({before: lastMessage.id})
-    }
-    while(chunk.size > 0)
-
-    console.log('All messages');
+   await fetchMemes();
 });
 
-/*
+
 client.on('message', msg => {
-    if (msg.content === 'ping') {
-      msg.reply('pong');
+    if (msg.content === 'Fetch my maymes!') {
+      msg.reply('Okey dokey!');
+      await fetchMemes();
     }
-  });
-*/
+});
+
 
 client.login(auth.token);
 
-var download = function(uri, filename, callback){
-    filename = dir + "/" + createGuid() + "_" + filename;
-    request.head(uri, function(err, res, body){
-  
-      request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
-    });
-  };
+fetchMemes = async function()
+{
+    try
+    {
+        console.log(`Logged in as ${client.user.tag}!`);
 
-function createGuid() {  
-    function s4() {  
-       return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);  
-    }  
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();  
- }  
+        helper.ensureFolderCreated(dir);
+    
+        console.log(`Starting purge...`);
+    
+        fsExtra.emptyDirSync(dir)
+    
+        console.log(`Purge completed!`);
+    
+        const memeChannel = client.channels.get(memeChannelId);
+        
+        let totalAttachments = 0;
+        let chunk = await memeChannel.fetchMessages();
+        do
+        {        
+            console.log(`Found ${chunk.size} messages in chunk!`);
+    
+            let messages = Array.from(chunk.values())
+    
+            for (message of messages)
+            {
+                message.attachments.forEach(a => {
+                    helper.download(a.url, a.filename, dir, function(){})
+                    totalAttachments++;
+                });
+            }
+    
+            lastMessage = messages.pop();
+            chunk = await memeChannel.fetchMessages({before: lastMessage.id})
+        }
+        while(chunk.size > 0)
+    
+        console.log(`Done! ${totalAttachments} tasty maymes saved.`);
+    }
+    catch(error)
+    {
+        console.error(`Something went terribly wrong. Error message: ${error}`)
+    }    
+}
