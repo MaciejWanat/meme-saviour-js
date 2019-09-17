@@ -2,8 +2,9 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const auth = require('./auth.json');
 const fs = require('fs');
+const request = require('request');
 
-const dir = './meme'
+const dir = './memes'
 
 client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -26,7 +27,8 @@ client.on('ready', async () => {
         for (message of messages)
         {
             message.attachments.forEach(a => {
-                fs.writeFileSync(`./memes/${a.name}`, a.file); // Write the file to the system synchronously.
+                download(a.url, a.filename, function(){})
+                //await fs.writeFileAsync(`./memes/${a.filename}`, a.file);
             });
         }
 
@@ -47,3 +49,18 @@ client.on('message', msg => {
 */
 
 client.login(auth.token);
+
+var download = function(uri, filename, callback){
+    filename = dir + "/" + createGuid() + "_" + filename;
+    request.head(uri, function(err, res, body){
+  
+      request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+    });
+  };
+
+function createGuid() {  
+    function s4() {  
+       return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);  
+    }  
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();  
+ }  

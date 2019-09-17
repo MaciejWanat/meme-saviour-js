@@ -8,6 +8,8 @@
         "discord.io": "^2.5.3",
         "discord.js": "^11.5.1",
         "fs": "0.0.1-security",
+        "request": "^2.88.0",
+        "underscore": "^1.9.1",
         "winston": "^3.2.1"
     }
 }
