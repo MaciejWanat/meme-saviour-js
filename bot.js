@@ -11,16 +11,31 @@ client.on('ready', async () => {
     do
     {        
         console.log(`Found ${chunk.size} messages in chunk!`);
-        // lastMessage = chunk.Entries[chunk.Entries.length - 1];
-        chunk = await memeChannel.fetchMessages()
+
+        let messages = Array.from(chunk.values())
+
+        messages.forEach();
+
+        for (message in messages)
+        {
+            if(message.attachments != null)
+            {
+                console.log(`Found attachment!`);
+            }
+        }
+
+        lastMessage = messages.pop();
+        chunk = await memeChannel.fetchMessages({before: lastMessage.id})
     }
-    while(chunk.size < 0)
+    while(chunk.size > 0)
 });
 
+/*
 client.on('message', msg => {
     if (msg.content === 'ping') {
       msg.reply('pong');
     }
   });
+*/
 
 client.login(auth.token);
