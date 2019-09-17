@@ -2,23 +2,25 @@ const Discord = require('discord.js');
 const auth = require('./auth.json');
 const fsExtra = require('fs-extra')
 const helper = require('./src/helper');
+const zipFolder = require('zip-a-folder');
 
 const client = new Discord.Client();
 const dir = './memes'
+const zipPath = "./memes.zip"
 const memeChannelId = "601159584941342739"
+const allowedExtensions = ["jpg", "jpeg", "png", "gif", "bmp"]
 
 client.on('ready', async () => {
+   console.log(`Logged in as ${client.user.tag}!`);
    await fetchMemes();
 });
 
-
-client.on('message', msg => {
+client.on('message', async msg => {
     if (msg.content === 'Fetch my maymes!') {
-      msg.reply('Okey dokey!');
+      msg.reply('Okey dokey! Just give me a while...');
       await fetchMemes();
     }
 });
-
 
 client.login(auth.token);
 
@@ -26,10 +28,11 @@ fetchMemes = async function()
 {
     try
     {
-        console.log(`Logged in as ${client.user.tag}!`);
+        console.log(`Starting memes saving process...`);
 
         helper.ensureFolderCreated(dir);
-    
+        helper.ensureZipDeleted(zipPath);
+
         console.log(`Starting purge...`);
     
         fsExtra.emptyDirSync(dir)
@@ -48,9 +51,15 @@ fetchMemes = async function()
     
             for (message of messages)
             {
-                message.attachments.forEach(a => {
-                    helper.download(a.url, a.filename, dir, function(){})
-                    totalAttachments++;
+                message.attachments.forEach(async (a) => {
+                    let extension = a.url.substring(a.url.lastIndexOf('/') + 1).split('.').pop().toLowerCase();
+
+                    if (allowedExtensions.includes(extension))
+                    {
+                        helper.download(a.url, a.filename, dir, function(){});
+
+                        totalAttachments++;
+                    }
                 });
             }
     
@@ -58,8 +67,17 @@ fetchMemes = async function()
             chunk = await memeChannel.fetchMessages({before: lastMessage.id})
         }
         while(chunk.size > 0)
-    
+
         console.log(`Done! ${totalAttachments} tasty maymes saved.`);
+        console.log(`Let me just zip that for you...`);
+        
+        await zipFolder.zipFolder(dir, zipPath, function(err) {
+            if(err) {
+                console.log('Something went wrong!', err);
+            }
+        });
+
+        console.log(`Done!`);
     }
     catch(error)
     {

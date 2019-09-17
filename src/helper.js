@@ -3,8 +3,7 @@ const fs = require('fs');
 
 exports.download = function(uri, filename, dir, callback){
     filename = dir + "/" + createGuid() + "_" + filename;
-    request.head(uri, function(err, res, body){
-  
+    request.head(uri, function(err, res, body){  
       request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
     });
   };
@@ -13,6 +12,15 @@ exports.ensureFolderCreated = function(dir){
     if (!fs.existsSync(dir)){
         fs.mkdirSync(dir);
     }
+}
+
+exports.ensureZipDeleted = function(zipPath){
+    fs.unlink(zipPath, (err) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+      })
 }
 
 function createGuid() {  

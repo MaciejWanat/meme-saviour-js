@@ -10,7 +10,7 @@
         "fs": "0.0.1-security",
         "fs-extra": "^8.1.0",
         "request": "^2.88.0",
-        "underscore": "^1.9.1",
-        "winston": "^3.2.1"
+        "winston": "^3.2.1",
+        "zip-a-folder": "0.0.9"
     }
 }
