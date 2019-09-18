@@ -6,7 +6,6 @@ const GoogleDriveService = require('./src/googleDrive/googleDriveService')
 
 const client = new Discord.Client();
 const dir = './memes'
-const zipPath = "./memes.zip"
 const memeChannelId = "601159584941342739"
 const allowedExtensions = ["jpg", "jpeg", "png", "gif", "bmp"]
 
@@ -68,9 +67,12 @@ fetchMemes = async function()
         while(chunk.size > 0)
 
         console.log(`Done! ${totalAttachments} tasty maymes saved.`);
-        console.log(`Lets upload these bad boys on your google drive.`);
+        console.log(`\nLets upload these bad boys on your google drive.`);
 
-        const googleDriveService = new GoogleDriveService();
+        const googleDriveService = new GoogleDriveService(dir);
+        googleDriveService.uploadPictures();
+
+        console.log(`Uploaded. Neat!`);
     }
     catch(error)
     {
