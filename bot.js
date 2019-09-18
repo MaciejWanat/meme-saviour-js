@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const auth = require('./auth.json');
 const fsExtra = require('fs-extra')
 const helper = require('./src/helper');
-const zipFolder = require('zip-a-folder');
+const GoogleDriveService = require('./src/googleDrive/googleDriveService')
 
 const client = new Discord.Client();
 const dir = './memes'
@@ -31,7 +31,6 @@ fetchMemes = async function()
         console.log(`Starting memes saving process...`);
 
         helper.ensureFolderCreated(dir);
-        helper.ensureZipDeleted(zipPath);
 
         console.log(`Starting purge...`);
     
@@ -69,15 +68,9 @@ fetchMemes = async function()
         while(chunk.size > 0)
 
         console.log(`Done! ${totalAttachments} tasty maymes saved.`);
-        console.log(`Let me just zip that for you...`);
-        
-        await zipFolder.zipFolder(dir, zipPath, function(err) {
-            if(err) {
-                console.log('Something went wrong!', err);
-            }
-        });
+        console.log(`Lets upload these bad boys on your google drive.`);
 
-        console.log(`Done!`);
+        const googleDriveService = new GoogleDriveService();
     }
     catch(error)
     {
