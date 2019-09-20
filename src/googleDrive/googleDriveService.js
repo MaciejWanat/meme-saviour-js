@@ -3,7 +3,7 @@ const readline = require('readline');
 const { google } = require('googleapis');
 
 // If modifying these scopes, delete token.json.
-const SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly', 'https://www.googleapis.com/auth/drive'];
+const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
@@ -83,7 +83,7 @@ class GoogleDriveService {
       this.getAccessToken(oAuth2Client);
     }
 
-    this.listFiles(oAuth2Client);
+    this.createGoogleDrive(oAuth2Client);
   }
 
   /**
@@ -116,27 +116,23 @@ class GoogleDriveService {
     });
   }
 
-  /**
-   * Lists the names and IDs of up to 10 files.
-   * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
-   */
-  listFiles(auth) {
+  createGoogleDrive(auth) {
     this.drive = google.drive({ version: 'v3', auth });
+  }
+
+  purgeFolder() {    
     this.drive.files.list({
-      pageSize: 10,
+      pageSize: 100,
       fields: 'nextPageToken, files(id, name)',
     }, (err, res) => {
       if (err) return console.log('The API returned an error: ' + err);
       const files = res.data.files;
       if (files.length) {
-        console.log('Files:');
-        files.map((file) => {
-          console.log(`${file.name} (${file.id})`);
-        });
+        
       } else {
         console.log('No files found.');
       }
-    });
+    });    
   }
 }
 

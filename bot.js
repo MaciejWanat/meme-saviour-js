@@ -67,7 +67,7 @@ fetchMemes = async function()
         while(chunk.size > 0)
 
         console.log(`Done! ${totalAttachments} tasty maymes saved.`);
-        console.log(`\nLets upload these bad boys on your google drive.`);
+        console.log(`\nLets upload these bad boys to your google drive.`);
 
         const googleDriveService = new GoogleDriveService(dir);
         googleDriveService.uploadPictures();
