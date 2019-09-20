@@ -122,41 +122,21 @@ class GoogleDriveService {
     this.drive = google.drive({ version: 'v3', auth });
   }
 
-  purgeFolder() {    
+  async purgeFolder() {    
     let pageToken = null;
-    let query = `\'${memeFolderId}\' in parents`
+    let query = `\'${memeFolderId}\' in parents`;
     let _this = this;
 
-    // Using the NPM module 'async'
-    async.doWhilst(function (callback) {
-      _this.drive.files.list({
-        q: query,
-        fields: 'nextPageToken, files(id, name)',
-        spaces: 'drive',
-        pageToken: pageToken
-      }, function (err, res) {
-        if (err) {
-          // Handle error
-          console.error(err);
-          callback(err)
-        } else {
-          res.data.files.forEach(function (file, index) {
-            setTimeout(() => _this.deleteFile(file.id), throttleMs * index);
-          });
-          pageToken = res.nextPageToken;
-          callback();
-        }
-      });
-    }, function () {
-      return !!pageToken;
-    }, function (err) {
-      if (err) {
-        // Handle error
-        console.error(err);
-      } else {
-        // All pages fetched
-      }
-    })
+    let queryResult = await _this.drive.files.list({
+      q: query,
+      fields: 'nextPageToken, files(id, name)',
+      spaces: 'drive',
+      pageToken: pageToken
+    });
+
+    queryResult.data.files.forEach(function (file, index) {
+      setTimeout(() => _this.deleteFile(file.id), throttleMs * index);
+    });
   }
 
   deleteFile(fileId){
