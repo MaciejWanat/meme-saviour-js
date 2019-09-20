@@ -1,5 +1,6 @@
 const fs = require('fs');
 const readline = require('readline');
+const async = require('async');
 const { google } = require('googleapis');
 
 // If modifying these scopes, delete token.json.
@@ -9,6 +10,7 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // time.
 const TOKEN_PATH = 'token.json';
 const memeFolderId = '12i2d0_2sE4lgxXx-sl1aA6s9znHmI4kK';
+const throttleMs = 1000;
 
 class GoogleDriveService {
   drive = null;
@@ -28,7 +30,7 @@ class GoogleDriveService {
       }
 
       files.forEach(function (file, index) {
-        setTimeout(() => _this.uploadPicture(file), 1000 * index);
+        setTimeout(() => _this.uploadPicture(file), throttleMs * index);
       })
     })
   }
@@ -121,18 +123,55 @@ class GoogleDriveService {
   }
 
   purgeFolder() {    
-    this.drive.files.list({
-      pageSize: 100,
-      fields: 'nextPageToken, files(id, name)',
-    }, (err, res) => {
-      if (err) return console.log('The API returned an error: ' + err);
-      const files = res.data.files;
-      if (files.length) {
-        
+    let pageToken = null;
+    let query = `\'${memeFolderId}\' in parents`
+    let _this = this;
+
+    // Using the NPM module 'async'
+    async.doWhilst(function (callback) {
+      _this.drive.files.list({
+        q: query,
+        fields: 'nextPageToken, files(id, name)',
+        spaces: 'drive',
+        pageToken: pageToken
+      }, function (err, res) {
+        if (err) {
+          // Handle error
+          console.error(err);
+          callback(err)
+        } else {
+          res.data.files.forEach(function (file, index) {
+            setTimeout(() => _this.deleteFile(file.id), throttleMs * index);
+          });
+          pageToken = res.nextPageToken;
+          callback();
+        }
+      });
+    }, function () {
+      return !!pageToken;
+    }, function (err) {
+      if (err) {
+        // Handle error
+        console.error(err);
       } else {
-        console.log('No files found.');
+        // All pages fetched
       }
-    });    
+    })
+  }
+
+  deleteFile(fileId){
+    console.log('Deleting file: ', fileId);
+    this.drive.files.delete({
+      fileId: fileId,
+      fields: 'id'
+    }, function (err, file) {
+      if (err) {
+        console.error(err);
+        // Handle error
+      } else {
+        // File moved.
+      }
+    });
   }
 }
 

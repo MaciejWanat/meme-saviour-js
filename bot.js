@@ -70,7 +70,7 @@ fetchMemes = async function()
         console.log(`\nLets upload these bad boys to your google drive.`);
 
         const googleDriveService = new GoogleDriveService(dir);
-        googleDriveService.uploadPictures();
+        googleDriveService.purgeFolder();
     }
     catch(error)
     {
