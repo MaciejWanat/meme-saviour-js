@@ -8,6 +8,7 @@ const SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly', 'http
 // created automatically when the authorization flow completes for the first
 // time.
 const TOKEN_PATH = 'token.json';
+const memeFolderId = '12i2d0_2sE4lgxXx-sl1aA6s9znHmI4kK';
 
 class GoogleDriveService {
   drive = null;
@@ -20,21 +21,23 @@ class GoogleDriveService {
 
   uploadPictures() {
     let _this = this;
+    _this.fileIterator = 0;
     fs.readdir(_this.dir, function (err, files) {
       if (err) {
         console.error("Could not list the directory.", err);
       }
 
       files.forEach(function (file, index) {
-        _this.uploadPicture(file)
-        console.log("file!")
+        setTimeout(() => _this.uploadPicture(file), 1000 * index);
       })
     })
   }
 
   uploadPicture(fileName) {
+    let _this = this;
     var fileMetadata = {
-      'name': fileName
+      'name': fileName,
+      parents: [memeFolderId]
     };
     var media = {
       mimeType: 'image/png',
@@ -49,7 +52,8 @@ class GoogleDriveService {
         // Handle error
         console.error(err);
       } else {
-        console.log('File Id: ', file.id);
+        _this.fileIterator++;
+        console.log(`File uploaded! Number: ${_this.fileIterator}`);
       }
     });
   }

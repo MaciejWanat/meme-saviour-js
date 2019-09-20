@@ -31,11 +31,11 @@ fetchMemes = async function()
 
         helper.ensureFolderCreated(dir);
 
-        console.log(`Starting purge...`);
+        console.log(`\nStarting purge...`);
     
         fsExtra.emptyDirSync(dir)
     
-        console.log(`Purge completed!`);
+        console.log(`Purge completed!\n`);
     
         const memeChannel = client.channels.get(memeChannelId);
         
@@ -71,8 +71,6 @@ fetchMemes = async function()
 
         const googleDriveService = new GoogleDriveService(dir);
         googleDriveService.uploadPictures();
-
-        console.log(`Uploaded. Neat!`);
     }
     catch(error)
     {
