@@ -1,41 +1,37 @@
 const Discord = require('discord.js');
-const auth = require('./auth.json');
+const appSettings = require('./appSettings.json');
 const fsExtra = require('fs-extra')
 const helper = require('./src/helper');
 const GoogleDriveService = require('./src/googleDriveService');
 const { performance } = require('perf_hooks')
 
 const client = new Discord.Client();
-const dir = './memes'
-const memeChannelId = "601159584941342739"
-const allowedExtensions = ["jpg", "jpeg", "png", "gif", "bmp"]
-const googleDriveShareLink = "x"
 
 client.on('ready', async () => {
    console.log(`Logged in as ${client.user.tag}!`);
-   let t0 = performance.now();
-
-   await fetchMemes();
-
-   let t1 = performance.now();
-
-   console.log(`Boy, that took a while... ${helper.millisToMinutesAndSeconds(t1 - t0)}, to be exact. Anyways, here are your memes: ${googleDriveShareLink}`)
 });
 
 client.on('message', async msg => {    
-    if (msg.content === 'Fetch my maymes!') {
+    if (msg.content === 'Fetch my memes!') {
       msg.reply('Okey dokey! Just give me a while...');
+      try
+      {
+        let t0 = performance.now();
+        const memeChannel = client.channels.get(appSettings.discordChannelId);
 
-      let t0 = performance.now();
-      await fetchMemes();
-      let t1 = performance.now();
+        await fetchMemes();
 
-      const memeChannel = client.channels.get(memeChannelId);
-      memeChannel.send(`Boy, that took a while... ${helper.millisToMinutesAndSeconds(t1 - t0)}, to be exact. Anyways, here are your memes: ${googleDriveShareLink}`)
+        let t1 = performance.now();
+        memeChannel.send(`Boy, that took a while... ${helper.millisToMinutesAndSeconds(t1 - t0)}, to be exact. Anyways, here are your memes: ${appSettings.googleDrive.shareLink}`)
+      }
+      catch(error)
+      {
+        memeChannel.send(`\nI'm sorry, but something went terribly wrong. Here's the error message: \n${error}`)
+      }
     }
 });
 
-client.login(auth.token);
+client.login(appSettings.botToken);
 
 fetchMemes = async function()
 {
@@ -43,15 +39,15 @@ fetchMemes = async function()
     {
         console.log(`Starting memes saving process...`);
 
-        helper.ensureFolderCreated(dir);
+        helper.ensureFolderCreated(appSettings.imagesDir);
 
         console.log(`\nStarting purge...`);
     
-        fsExtra.emptyDirSync(dir)
+        fsExtra.emptyDirSync(appSettings.imagesDir)
     
         console.log(`Purge completed!\n`);
     
-        const memeChannel = client.channels.get(memeChannelId);
+        const memeChannel = client.channels.get(appSettings.discordChannelId);
         
         let totalAttachments = 0;
         let chunk = await memeChannel.fetchMessages();
@@ -66,9 +62,9 @@ fetchMemes = async function()
                 message.attachments.forEach(async (a) => {
                     let extension = a.url.substring(a.url.lastIndexOf('/') + 1).split('.').pop().toLowerCase();
 
-                    if (allowedExtensions.includes(extension))
+                    if (appSettings.allowedExtensions.includes(extension))
                     {
-                        helper.download(a.url, a.filename, dir, function(){});
+                        helper.download(a.url, a.filename, appSettings.imagesDir, function(){});
 
                         totalAttachments++;
                     }
@@ -83,16 +79,17 @@ fetchMemes = async function()
         console.log(`Done! ${totalAttachments} tasty maymes saved.`);
         console.log(`\nLets upload these bad boys to your google drive.`);
 
-        const googleDriveService = new GoogleDriveService("./memes2");
+        const googleDriveService = new GoogleDriveService(appSettings.imagesDir, appSettings.googleDrive.folderId);
 
         console.log(`\nPurging your google drive folder...`);
         await googleDriveService.purgeFolder();
 
-        console.log(`\nDone! It's time to upload you memes.`)
+        console.log(`\nDone! It's time to upload your memes.`)
         await googleDriveService.uploadPictures();
     }
     catch(error)
     {
         console.error(`Something went terribly wrong. Error message: ${error}`)
+        throw error;
     }    
 }

@@ -9,11 +9,11 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // created automatically when the authorization flow completes for the first
 // time.
 const TOKEN_PATH = 'token.json';
-const memeFolderId = '12i2d0_2sE4lgxXx-sl1aA6s9znHmI4kK';
 
 class GoogleDriveService {
 
-  constructor(dir) {
+  constructor(dir, folderId) {
+    this.folderId = folderId;
     this.dir = dir;
     this.drive = null;
     this.authorize();
@@ -35,7 +35,7 @@ class GoogleDriveService {
   async uploadPicture(fileName) {
     var fileMetadata = {
       'name': fileName,
-      parents: [memeFolderId]
+      parents: [this.folderId]
     };
     var media = {
       mimeType: 'image/png',
@@ -109,7 +109,7 @@ class GoogleDriveService {
 
   async purgeFolder() {    
     let pageToken = null;
-    let query = `\'${memeFolderId}\' in parents`;
+    let query = `\'${this.folderId}\' in parents`;
     let _this = this;
 
     let queryResult = await _this.drive.files.list({

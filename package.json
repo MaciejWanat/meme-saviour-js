@@ -10,7 +10,9 @@
         "fs": "0.0.1-security",
         "fs-extra": "^8.1.0",
         "googleapis": "^39.2.0",
+        "perf_hooks": "0.0.1",
         "request": "^2.88.0",
+        "util": "^0.12.1",
         "winston": "^3.2.1"
     }
 }
