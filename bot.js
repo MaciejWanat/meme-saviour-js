@@ -2,22 +2,36 @@ const Discord = require('discord.js');
 const auth = require('./auth.json');
 const fsExtra = require('fs-extra')
 const helper = require('./src/helper');
-const GoogleDriveService = require('./src/googleDrive/googleDriveService')
+const GoogleDriveService = require('./src/googleDriveService');
+const { performance } = require('perf_hooks')
 
 const client = new Discord.Client();
 const dir = './memes'
 const memeChannelId = "601159584941342739"
 const allowedExtensions = ["jpg", "jpeg", "png", "gif", "bmp"]
+const googleDriveShareLink = "x"
 
 client.on('ready', async () => {
    console.log(`Logged in as ${client.user.tag}!`);
+   let t0 = performance.now();
+
    await fetchMemes();
+
+   let t1 = performance.now();
+
+   console.log(`Boy, that took a while... ${helper.millisToMinutesAndSeconds(t1 - t0)}, to be exact. Anyways, here are your memes: ${googleDriveShareLink}`)
 });
 
-client.on('message', async msg => {
+client.on('message', async msg => {    
     if (msg.content === 'Fetch my maymes!') {
       msg.reply('Okey dokey! Just give me a while...');
+
+      let t0 = performance.now();
       await fetchMemes();
+      let t1 = performance.now();
+
+      const memeChannel = client.channels.get(memeChannelId);
+      memeChannel.send(`Boy, that took a while... ${helper.millisToMinutesAndSeconds(t1 - t0)}, to be exact. Anyways, here are your memes: ${googleDriveShareLink}`)
     }
 });
 
@@ -69,13 +83,13 @@ fetchMemes = async function()
         console.log(`Done! ${totalAttachments} tasty maymes saved.`);
         console.log(`\nLets upload these bad boys to your google drive.`);
 
-        const googleDriveService = new GoogleDriveService(dir);
+        const googleDriveService = new GoogleDriveService("./memes2");
 
         console.log(`\nPurging your google drive folder...`);
         await googleDriveService.purgeFolder();
 
         console.log(`\nDone! It's time to upload you memes.`)
-        googleDriveService.uploadPictures();
+        await googleDriveService.uploadPictures();
     }
     catch(error)
     {

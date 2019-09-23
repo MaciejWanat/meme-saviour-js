@@ -14,6 +14,12 @@ exports.ensureFolderCreated = function(dir){
     }
 }
 
+exports.millisToMinutesAndSeconds = function(millis) {
+  let minutes = Math.floor(millis / 60000);
+  let seconds = ((millis % 60000) / 1000).toFixed(0);
+  return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+}
+
 function createGuid() {  
     function s4() {  
        return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);  

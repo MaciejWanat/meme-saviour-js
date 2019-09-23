@@ -1,6 +1,7 @@
 const fs = require('fs');
 const readline = require('readline');
 const { google } = require('googleapis');
+const util = require('util');
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
@@ -9,33 +10,29 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // time.
 const TOKEN_PATH = 'token.json';
 const memeFolderId = '12i2d0_2sE4lgxXx-sl1aA6s9znHmI4kK';
-const throttleMs = 1000;
 
 class GoogleDriveService {
-  drive = null;
-  dir = null;
 
   constructor(dir) {
     this.dir = dir;
+    this.drive = null;
     this.authorize();
   }
 
-  uploadPictures() {
+  async uploadPictures() {
     let _this = this;
-    _this.fileIterator = 0;
-    fs.readdir(_this.dir, function (err, files) {
-      if (err) {
-        console.error("Could not list the directory.", err);
-      }
+    
+    const readdir = util.promisify(fs.readdir);
 
-      files.forEach(function (file, index) {
-        setTimeout(() => _this.uploadPicture(file), throttleMs * index);
-      })
-    })
+    const files = await readdir(_this.dir);
+
+    for (let file of files)
+    {
+      await _this.uploadPicture(file);
+    }
   }
 
-  uploadPicture(fileName) {
-    let _this = this;
+  async uploadPicture(fileName) {
     var fileMetadata = {
       'name': fileName,
       parents: [memeFolderId]
@@ -44,27 +41,22 @@ class GoogleDriveService {
       mimeType: 'image/png',
       body: fs.createReadStream(this.dir + "/" + fileName)
     };
-    this.drive.files.create({
-      resource: fileMetadata,
-      media: media,
-      fields: 'id'
-    }, function (err, file) {
-      if (err) {
-        // Handle error
-        console.error(err);
-      } else {
-        _this.fileIterator++;
-        console.log(`File uploaded! Number: ${_this.fileIterator}`);
-      }
-    });
+    try
+    {
+      let response = await this.drive.files.create({
+        resource: fileMetadata,
+        media: media,
+        fields: 'id'
+      });
+
+      console.log(`File uploaded! Id: ${response.data.id}`);
+    }
+    catch(ex)
+    {
+      console.error("Error while adding file: ", ex);
+    }
   }
 
-  /**
-   * Create an OAuth2 client with the given credentials, and then execute the
-   * given callback function.
-   * @param {Object} credentials The authorization client credentials.
-   * @param {function} callback The callback to call with the authorized client.
-   */
   authorize() {
     const content = fs.readFileSync('credentials.json');
     const credentials = JSON.parse(content);
@@ -87,12 +79,6 @@ class GoogleDriveService {
     this.createGoogleDrive(oAuth2Client);
   }
 
-  /**
-   * Get and store new token after prompting for user authorization, and then
-   * execute the given callback with the authorized OAuth2 client.
-   * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
-   * @param {getEventsCallback} callback The callback for the authorized client.
-   */
   getAccessToken(oAuth2Client) {
     const authUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
