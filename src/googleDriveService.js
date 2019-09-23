@@ -12,23 +12,22 @@ const TOKEN_PATH = 'token.json';
 
 class GoogleDriveService {
 
-  constructor(dir, folderId) {
+  constructor(dir, folderId, logger) {
     this.folderId = folderId;
     this.dir = dir;
     this.drive = null;
+    this.logger = logger;
     this.authorize();
   }
 
-  async uploadPictures() {
-    let _this = this;
-    
+  async uploadPictures() {    
     const readdir = util.promisify(fs.readdir);
 
-    const files = await readdir(_this.dir);
+    const files = await readdir(this.dir);
 
     for (let file of files)
     {
-      await _this.uploadPicture(file);
+      await this.uploadPicture(file);
     }
   }
 
@@ -49,11 +48,11 @@ class GoogleDriveService {
         fields: 'id'
       });
 
-      console.log(`File uploaded! Id: ${response.data.id}`);
+      this.logger.info(`File uploaded! Id: ${response.data.id}`);
     }
     catch(ex)
     {
-      console.error("Error while adding file: ", ex);
+      this.logger.error("Error while adding file: ", ex);
     }
   }
 
@@ -126,7 +125,7 @@ class GoogleDriveService {
   }
 
   async deleteFile(fileId) {
-    console.log('Deleting file: ', fileId);
+    this.logger.info(`Deleting file: ${fileId}`);
     
     try
     {
@@ -137,7 +136,7 @@ class GoogleDriveService {
     }
     catch(ex)
     {
-      console.error(ex);
+      this.logger.error(ex);
     }
   }
 }

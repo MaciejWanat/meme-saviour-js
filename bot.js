@@ -3,9 +3,27 @@ const appSettings = require('./appSettings.json');
 const fsExtra = require('fs-extra')
 const helper = require('./src/helper');
 const GoogleDriveService = require('./src/googleDriveService');
-const { performance } = require('perf_hooks')
+const { performance } = require('perf_hooks');
+const winston = require('winston');
+require('winston-daily-rotate-file');
 
 const client = new Discord.Client();
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp({
+          format: 'YYYY-MM-DD HH:mm:ss'
+        }),
+        winston.format.errors({ stack: true }),
+        winston.format.splat(),
+        winston.format.json()
+      ),
+    defaultMeta: { service: 'meme-saviour' },
+    transports: [
+      new (winston.transports.DailyRotateFile)({ filename: './logs/error-%DATE%.log', datePattern: 'YYYY-MM-DD-HH', level: 'error', maxSize: '20m', maxFiles:'14d' }),
+      new (winston.transports.DailyRotateFile)({ filename: './logs/combined-%DATE%.log', datePattern: 'YYYY-MM-DD-HH', maxSize: '20m', maxFiles:'14d' })
+    ]
+  });
 
 client.on('ready', async () => {
    console.log(`Logged in as ${client.user.tag}!`);
@@ -13,16 +31,20 @@ client.on('ready', async () => {
 
 client.on('message', async msg => {    
     if (msg.content === 'Fetch my memes!') {
+      logger.info('Fetching started... ');
       msg.reply('Okey dokey! Just give me a while...');
+      const memeChannel = client.channels.get(appSettings.discordChannelId);
+
       try
       {
         let t0 = performance.now();
-        const memeChannel = client.channels.get(appSettings.discordChannelId);
 
         await fetchMemes();
 
         let t1 = performance.now();
-        memeChannel.send(`Boy, that took a while... ${helper.millisToMinutesAndSeconds(t1 - t0)}, to be exact. Anyways, here are your memes: ${appSettings.googleDrive.shareLink}`)
+        let timePassed = helper.millisToMinutesAndSeconds(t1 - t0);
+        memeChannel.send(`Boy, that took a while... ${timePassed}, to be exact. Anyways, here are your memes: ${appSettings.googleDrive.shareLink}`)
+        logger.info(`Fetched successfuly after ${timePassed}.`);
       }
       catch(error)
       {
@@ -37,15 +59,15 @@ fetchMemes = async function()
 {
     try
     {
-        console.log(`Starting memes saving process...`);
+        logger.info('Starting memes saving process...');
 
         helper.ensureFolderCreated(appSettings.imagesDir);
 
-        console.log(`\nStarting purge...`);
+        logger.info(`Starting purge...`);
     
         fsExtra.emptyDirSync(appSettings.imagesDir)
     
-        console.log(`Purge completed!\n`);
+        logger.info(`Purge completed!`);
     
         const memeChannel = client.channels.get(appSettings.discordChannelId);
         
@@ -53,7 +75,7 @@ fetchMemes = async function()
         let chunk = await memeChannel.fetchMessages();
         do
         {        
-            console.log(`Found ${chunk.size} messages in chunk!`);
+            logger.info(`Found ${chunk.size} messages in chunk!`);
     
             let messages = Array.from(chunk.values())
     
@@ -76,20 +98,21 @@ fetchMemes = async function()
         }
         while(chunk.size > 0)
 
-        console.log(`Done! ${totalAttachments} tasty maymes saved.`);
-        console.log(`\nLets upload these bad boys to your google drive.`);
+        logger.info(`Done! ${totalAttachments} tasty maymes saved.`);
+        logger.info(`Lets upload these bad boys to your google drive.`);
 
-        const googleDriveService = new GoogleDriveService(appSettings.imagesDir, appSettings.googleDrive.folderId);
+        const googleDriveService = new GoogleDriveService(appSettings.imagesDir, appSettings.googleDrive.folderId, logger);
 
-        console.log(`\nPurging your google drive folder...`);
+        logger.info(`Purging your google drive folder...`);
         await googleDriveService.purgeFolder();
 
-        console.log(`\nDone! It's time to upload your memes.`)
+        logger.info(`Done! It's time to upload your memes.`)
         await googleDriveService.uploadPictures();
     }
     catch(error)
     {
-        console.error(`Something went terribly wrong. Error message: ${error}`)
+        logger.error(`Something went terribly wrong. Error message: ${error}`)
+        logger.error(`Stack trace: ${error.stack}`)
         throw error;
     }    
 }
