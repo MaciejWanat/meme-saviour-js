@@ -6,6 +6,7 @@ const GoogleDriveService = require('./src/googleDriveService');
 const { performance } = require('perf_hooks');
 const winston = require('winston');
 require('winston-daily-rotate-file');
+const expressServer = require('./express-bot/expressServer');
 
 const client = new Discord.Client();
 const logger = winston.createLogger({
@@ -27,6 +28,9 @@ const logger = winston.createLogger({
 
 client.on('ready', async () => {
    console.log(`Logged in as ${client.user.tag}!`);
+
+   // This line exposes simple http server for you to ping if you want to see if the app is alive. This is not mandatory.
+   expressServer.start(appSettings.serverPort);
 });
 
 client.on('message', async msg => {    

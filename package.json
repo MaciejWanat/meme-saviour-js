@@ -7,12 +7,14 @@
     "dependencies": {
         "discord.io": "^2.5.3",
         "discord.js": "^11.5.1",
+        "express": "^4.16.4",
         "fs": "0.0.1-security",
         "fs-extra": "^8.1.0",
         "googleapis": "^39.2.0",
         "perf_hooks": "0.0.1",
         "request": "^2.88.0",
         "util": "^0.12.1",
-        "winston": "^3.2.1"
+        "winston": "^3.2.1",
+        "winston-daily-rotate-file": "^4.1.0"
     }
 }
