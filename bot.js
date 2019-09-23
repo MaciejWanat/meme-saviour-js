@@ -75,7 +75,7 @@ fetchMemes = async function()
         await googleDriveService.purgeFolder();
 
         console.log(`\nDone! It's time to upload you memes.`)
-        //googleDriveService.uploadPictures();
+        googleDriveService.uploadPictures();
     }
     catch(error)
     {

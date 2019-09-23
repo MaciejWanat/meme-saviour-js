@@ -1,6 +1,5 @@
 const fs = require('fs');
 const readline = require('readline');
-const async = require('async');
 const { google } = require('googleapis');
 
 // If modifying these scopes, delete token.json.
@@ -134,24 +133,26 @@ class GoogleDriveService {
       pageToken: pageToken
     });
 
-    queryResult.data.files.forEach(function (file, index) {
-      setTimeout(() => _this.deleteFile(file.id), throttleMs * index);
-    });
+    for (let file of queryResult.data.files)
+    {
+      await _this.deleteFile(file.id);
+    }
   }
 
-  deleteFile(fileId){
+  async deleteFile(fileId) {
     console.log('Deleting file: ', fileId);
-    this.drive.files.delete({
-      fileId: fileId,
-      fields: 'id'
-    }, function (err, file) {
-      if (err) {
-        console.error(err);
-        // Handle error
-      } else {
-        // File moved.
-      }
-    });
+    
+    try
+    {
+      await this.drive.files.delete({
+        fileId: fileId,
+        fields: 'id'
+      })
+    }
+    catch(ex)
+    {
+      console.error(ex);
+    }
   }
 }
 
